@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.app",
+  "build": {
+    "builder": "RAILPACK"
+  },
+  "deploy": {
+    "startCommand": "npx serve -s dist/client/browser -l $PORT",
+    "healthcheckPath": "/"
+  },
+  "variables": {
+    "PNPM_INSTALL_ARGS": "--no-frozen-lockfile",
+    "RAILPACK_OUTPUT_DIR": "dist/client/browser"
+  }
+}

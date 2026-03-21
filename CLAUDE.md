@@ -11,6 +11,8 @@ Trip Planner is a full-stack application built as a **pnpm workspace monorepo** 
 
 Each package has its own `CLAUDE.md` with project-specific guidelines.
 
+See [`AGENTS.md`](./AGENTS.md) for the full skill routing table — it maps tasks to the agent skills available in this monorepo.
+
 ## Quick Start
 
 ```bash

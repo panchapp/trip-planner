@@ -1,8 +1,8 @@
+import type { User } from '@app/modules/auth/entities/user';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { AuthService } from '@modules/auth/auth.service';
 import { UserProfileDto } from '@modules/auth/dto/user-profile.dto';
-import type { User } from '@modules/auth/entities/user.entity';
 import {
   Controller,
   Get,

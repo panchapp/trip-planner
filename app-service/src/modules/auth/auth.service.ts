@@ -1,12 +1,11 @@
+import type { User } from '@app/modules/auth/entities/user';
 import { UserProfileDto } from '@modules/auth/dto/user-profile.dto';
-import { RefreshToken } from '@modules/auth/entities/refresh-token.entity';
-import { User } from '@modules/auth/entities/user.entity';
+import { RefreshTokenRepository } from '@modules/auth/interfaces/refresh-token.repository';
+import { UserRepository } from '@modules/auth/interfaces/user.repository';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
-import { Repository } from 'typeorm';
 
 export interface JwtPayload {
   sub: string;
@@ -17,10 +16,8 @@ export interface JwtPayload {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly userRepository: UserRepository,
+    private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -32,26 +29,23 @@ export class AuthService {
     lastName: string;
     avatarUrl?: string | null;
   }): Promise<User> {
-    let user = await this.userRepository.findOne({
-      where: { googleId: profile.googleId },
-    });
+    const existing = await this.userRepository.findByGoogleId(profile.googleId);
 
-    if (user) {
-      user.firstName = profile.firstName;
-      user.lastName = profile.lastName;
-      user.avatarUrl = profile.avatarUrl ?? null;
-      await this.userRepository.save(user);
-      return user;
+    if (existing) {
+      return this.userRepository.updateProfile(existing.id, {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        avatarUrl: profile.avatarUrl ?? null,
+      });
     }
 
-    user = this.userRepository.create({
+    return this.userRepository.create({
       googleId: profile.googleId,
       email: profile.email,
       firstName: profile.firstName,
       lastName: profile.lastName,
       avatarUrl: profile.avatarUrl ?? null,
     });
-    return this.userRepository.save(user);
   }
 
   signAccessToken(user: User): string {
@@ -95,13 +89,12 @@ export class AuthService {
     user: User,
     rawRefreshToken: string,
   ): Promise<void> {
-    await this.refreshTokenRepository.delete({ userId: user.id });
-    const entity = this.refreshTokenRepository.create({
+    await this.refreshTokenRepository.deleteByUserId(user.id);
+    await this.refreshTokenRepository.create({
       userId: user.id,
       tokenHash: this.hashRefreshToken(rawRefreshToken),
       expiresAt: this.getRefreshExpiryDate(),
     });
-    await this.refreshTokenRepository.save(entity);
   }
 
   async refreshFromRawToken(
@@ -120,40 +113,37 @@ export class AuthService {
     }
 
     const presentedHash = this.hashRefreshToken(rawRefreshToken);
-    const row = await this.refreshTokenRepository.findOne({
-      where: { tokenHash: presentedHash },
-    });
+    const row = await this.refreshTokenRepository.findByTokenHash(presentedHash);
 
     if (!row || row.userId !== payload.sub) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (row.expiresAt.getTime() < Date.now()) {
-      await this.refreshTokenRepository.delete({ id: row.id });
+      await this.refreshTokenRepository.deleteById(row.id);
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const user = await this.userRepository.findOne({ where: { id: payload.sub } });
+    const user = await this.userRepository.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    await this.refreshTokenRepository.delete({ id: row.id });
+    await this.refreshTokenRepository.deleteById(row.id);
 
     const accessToken = this.signAccessToken(user);
     const newRefreshToken = this.signRefreshToken(user);
-    const newRow = this.refreshTokenRepository.create({
+    await this.refreshTokenRepository.create({
       userId: user.id,
       tokenHash: this.hashRefreshToken(newRefreshToken),
       expiresAt: this.getRefreshExpiryDate(),
     });
-    await this.refreshTokenRepository.save(newRow);
 
     return { accessToken, refreshToken: newRefreshToken };
   }
 
   async revokeAllRefreshTokensForUserId(userId: string): Promise<void> {
-    await this.refreshTokenRepository.delete({ userId });
+    await this.refreshTokenRepository.deleteByUserId(userId);
   }
 
   async tryRevokeRefreshToken(rawRefreshToken: string): Promise<void> {
@@ -164,20 +154,18 @@ export class AuthService {
         return;
       }
       const presentedHash = this.hashRefreshToken(rawRefreshToken);
-      const row = await this.refreshTokenRepository.findOne({
-        where: { tokenHash: presentedHash },
-      });
+      const row = await this.refreshTokenRepository.findByTokenHash(presentedHash);
       if (!row || row.userId !== payload.sub) {
         return;
       }
-      await this.refreshTokenRepository.delete({ id: row.id });
+      await this.refreshTokenRepository.deleteById(row.id);
     } catch {
       // Invalid or expired token — cookies still cleared by controller.
     }
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.findById(id);
   }
 
   toProfileDto(user: User): UserProfileDto {

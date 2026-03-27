@@ -1,6 +1,6 @@
+import type { User } from '@app/modules/auth/entities/user';
 import type { JwtPayload } from '@modules/auth/auth.service';
 import { AuthService } from '@modules/auth/auth.service';
-import { User } from '@modules/auth/entities/user.entity';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';

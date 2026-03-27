@@ -7,6 +7,15 @@ description: NestJS 11 best practices and coding guidelines for the app-service 
 
 > **Conventions reference**: `app-service/CLAUDE.md` (always loaded) covers project structure, naming, path aliases, and key patterns. This skill provides detailed code generation patterns and decision guidance.
 
+## Modular architecture
+
+Structure the app around **NestJS feature modules**, not around extra layering styles from other ecosystems.
+
+- **`src/common/`** — shared building blocks used by many features (guards, pipes, database wiring, decorators).
+- **`src/modules/<feature>/`** — everything that belongs to one feature stays together: module, controller, service, DTOs, and optional repositories.
+- **Scalability** — add new capabilities by adding modules and declaring imports/exports; avoid turning the codebase into a deep global layer cake.
+- **Simplicity** — prefer flat, obvious folders inside a feature; introduce subfolders (`dto/`, `repositories/`, `interfaces/`) only when a feature grows enough to need them.
+
 ## Modules
 
 ```typescript
@@ -22,7 +31,7 @@ import { TripsService } from './trips.service';
 export class TripsModule {}
 ```
 
-- One module per feature domain.
+- One module per feature.
 - Export services that other modules consume.
 - Use `forRoot()` / `forRootAsync()` patterns for configurable dynamic modules.
 - Register feature modules in `AppModule` imports.
@@ -76,7 +85,7 @@ export class TripsController {
 ```typescript
 @Injectable()
 export class TripsService {
-  constructor(private readonly tripRepository: TripRepositoryPort) {}
+  constructor(private readonly tripRepository: TripRepository) {}
 
   async create(dto: CreateTripDto): Promise<Trip> {
     return this.tripRepository.create(dto);
@@ -142,13 +151,26 @@ export class UpdateTripDto extends PartialType(CreateTripDto) {}
 - Mark DTO properties as `readonly`.
 - Do NOT add Swagger decorators (`@ApiProperty`, etc.) to DTOs — we use baseline Swagger only.
 
-## Database & Repository Pattern
+## Data access (repositories)
 
-Abstract data access behind repository classes to keep services ORM-agnostic:
+Keep persistence details inside the feature module. Expose an **abstract repository** to the service so the service stays focused on rules and orchestration; register the concrete implementation in the same module.
+
+Example layout under `src/modules/trips/`:
+
+```text
+trips.module.ts
+trips.controller.ts
+trips.service.ts
+dto/
+interfaces/
+  trip.repository.ts      # abstract class (contract)
+repositories/
+  trip-knex.repository.ts # concrete implementation (e.g. Knex)
+```
 
 ```typescript
-// domain/ports/trip-repository.port.ts
-export abstract class TripRepositoryPort {
+// modules/trips/interfaces/trip.repository.ts
+export abstract class TripRepository {
   abstract create(data: CreateTripDto): Promise<Trip>;
   abstract findById(id: string): Promise<Trip | null>;
   abstract findAll(options?: { page?: number }): Promise<Trip[]>;
@@ -158,27 +180,24 @@ export abstract class TripRepositoryPort {
 ```
 
 ```typescript
-// infrastructure/repositories/trip.repository.ts
+// modules/trips/repositories/trip-knex.repository.ts
 import { Injectable } from '@nestjs/common';
-import { TripRepositoryPort } from '../../domain/ports/trip-repository.port';
+import { TripRepository } from '../interfaces/trip.repository';
 
 @Injectable()
-export class TripRepository extends TripRepositoryPort {
+export class TripKnexRepository extends TripRepository {
   async findById(id: string): Promise<Trip | null> {
-    // Implement with your chosen ORM:
-    // Prisma:   return this.prisma.trip.findUnique({ where: { id } });
-    // Mongoose: return this.tripModel.findById(id);
-    // TypeORM:  return this.tripRepo.findOneBy({ id });
+    // Implement with the project's DB client (e.g. Knex query builder).
   }
 }
 ```
 
 ```typescript
-// trips.module.ts — bind the abstract port to the concrete implementation
+// trips.module.ts — bind contract to implementation
 @Module({
   providers: [
     TripsService,
-    { provide: TripRepositoryPort, useClass: TripRepository },
+    { provide: TripRepository, useClass: TripKnexRepository },
   ],
 })
 export class TripsModule {}
@@ -186,11 +205,10 @@ export class TripsModule {}
 
 ### Rules
 
-- Define abstract repository ports in `domain/ports/`.
-- Implement concrete repositories in `infrastructure/repositories/`.
-- Bind abstractions to implementations in the module `providers` array.
-- Services depend on the abstract port — never on the concrete repository directly.
-- This makes swapping ORMs or adding test doubles straightforward.
+- Keep repository contracts and implementations under the same feature folder.
+- Register `{ provide: TripRepository, useClass: TripKnexRepository }` (or equivalent) in the feature module.
+- Services inject `TripRepository` (the abstract class used as a token) — not the concrete class.
+- Use test doubles by swapping the `useClass` (or `useValue`) binding in tests.
 
 ## Swagger / OpenAPI
 
@@ -350,7 +368,7 @@ export class AppModule {}
 - [ ] DTOs validated with `class-validator` decorators and `readonly` properties
 - [ ] Global `ValidationPipe` with `whitelist`, `forbidNonWhitelisted`, `transform`
 - [ ] Built-in HTTP exceptions for error responses
-- [ ] Repository pattern for data access — services depend on abstract ports
+- [ ] Data access via feature-scoped repositories — services depend on abstract repository contracts
 - [ ] No Swagger decorators — baseline setup only (DocumentBuilder + createDocument)
 - [ ] `@nestjs/config` `ConfigService` — no raw `process.env`
 - [ ] Scoped `Logger` instances — no `console.log`

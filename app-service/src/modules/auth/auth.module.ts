@@ -1,18 +1,18 @@
 import { AuthController } from '@modules/auth/auth.controller';
 import { AuthService } from '@modules/auth/auth.service';
-import { RefreshToken } from '@modules/auth/entities/refresh-token.entity';
-import { User } from '@modules/auth/entities/user.entity';
+import { RefreshTokenRepository } from '@modules/auth/interfaces/refresh-token.repository';
+import { UserRepository } from '@modules/auth/interfaces/user.repository';
+import { RefreshTokenKnexRepository } from '@modules/auth/repositories/refresh-token-knex.repository';
+import { UserKnexRepository } from '@modules/auth/repositories/user-knex.repository';
 import { GoogleOAuthStrategy } from '@modules/auth/strategies/google-oauth.strategy';
 import { JwtStrategy } from '@modules/auth/strategies/jwt.strategy';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,7 +26,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleOAuthStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    { provide: UserRepository, useClass: UserKnexRepository },
+    { provide: RefreshTokenRepository, useClass: RefreshTokenKnexRepository },
+    GoogleOAuthStrategy,
+    JwtStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

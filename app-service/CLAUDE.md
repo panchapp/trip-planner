@@ -3,12 +3,14 @@
 ## Quick Start
 
 ```bash
-pnpm --filter app-service start:dev   # watch mode
-pnpm --filter app-service test        # unit tests
-pnpm --filter app-service test:e2e    # e2e tests
-pnpm --filter app-service build       # production build
-pnpm --filter app-service lint        # lint
-pnpm --filter app-service format      # prettier
+pnpm --filter app-service start:dev         # watch mode
+pnpm --filter app-service migrate:latest    # run pending migrations
+pnpm --filter app-service test              # unit tests
+pnpm --filter app-service test:e2e          # e2e tests
+pnpm --filter app-service build             # production build
+pnpm --filter app-service build:all         # app + migration build artifacts
+pnpm --filter app-service lint              # lint
+pnpm --filter app-service format            # prettier
 ```
 
 ## Architecture
@@ -16,33 +18,34 @@ pnpm --filter app-service format      # prettier
 - **Modular architecture** — one module per feature domain
 - **Express v5** — use named wildcards (`*splat` not bare `*`)
 - **ESM compatible** — `nodenext` module resolution
+- **Knex + PostgreSQL** — global `DatabaseModule` provides DB access
 - Bootstrap via `NestFactory.create` with root `AppModule`
 
 ## Project Structure
 
 ```
+knexfile.ts                    # Knex CLI config (TS)
+tsconfig.knex.json             # migration build config
+migrations/                    # Knex migration source files
 src/
 ├── main.ts                     # Bootstrap, global pipes/filters/interceptors
 ├── app.module.ts               # Root module
-├── app.controller.ts           # Root health/info endpoint
-├── app.service.ts              # Root service
 ├── common/                     # Shared utilities across all features
+│   ├── config/                 # Typed config factories
+│   ├── database/               # KNEX token, global DB module, shutdown hook
 │   ├── decorators/
-│   ├── dto/
-│   ├── filters/
 │   ├── guards/
-│   ├── interceptors/
-│   ├── middleware/
-│   ├── pipes/
-│   └── interfaces/
+│   └── ...
 └── modules/                    # Feature modules
     └── <feature>/
         ├── <feature>.module.ts
         ├── <feature>.controller.ts
         ├── <feature>.service.ts
         ├── dto/
-        ├── entities/
-        └── interfaces/
+        ├── entities/           # Feature-owned data shapes/types
+        ├── interfaces/         # Repository contracts (abstract classes)
+        ├── strategies/         # Passport/JWT strategy classes (when needed)
+        └── repositories/       # Concrete persistence (e.g. *-knex.repository.ts)
 ```
 
 ## Naming Conventions
@@ -58,7 +61,7 @@ src/
 | Filter      | `http-exception.filter.ts`  | `HttpExceptionFilter` |
 | Middleware  | `logger.middleware.ts`      | `LoggerMiddleware`    |
 | DTO         | `create-trip.dto.ts`        | `CreateTripDto`       |
-| Entity      | `trip.entity.ts`            | `Trip`                |
+| Data type   | `trip.ts`                   | `Trip`                |
 | Decorator   | `current-user.decorator.ts` | `CurrentUser`         |
 | Spec        | `<name>.spec.ts`            | —                     |
 
@@ -69,6 +72,13 @@ src/
 - One module per feature domain
 - Export services that other modules consume
 - Use `forRoot()` / `forRootAsync()` for configurable dynamic modules
+
+### Persistence
+
+- Keep repository contracts inside each feature (`interfaces/`)
+- Keep Knex implementations inside the same feature (`repositories/`)
+- Bind contracts in module providers (`{ provide: XRepository, useClass: XKnexRepository }`)
+- Keep migration files in root `migrations/` and apply them explicitly
 
 ### Controllers
 
@@ -98,7 +108,7 @@ src/
 ### Configuration
 
 - `@nestjs/config` with `ConfigService` — never read `process.env` directly
-- `ConfigModule.forRoot({ isGlobal: true })`
+- `ConfigModule.forRoot({ isGlobal: true, load: [appConfig] })`
 - Typed config via `registerAs()` factory functions
 
 ### Logging
@@ -116,6 +126,7 @@ src/
 
 | Alias        | Maps to         |
 | ------------ | --------------- |
+| `@app/*`     | `src/*`         |
 | `@common/*`  | `src/common/*`  |
 | `@modules/*` | `src/modules/*` |
 

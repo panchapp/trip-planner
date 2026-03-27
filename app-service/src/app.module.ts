@@ -1,12 +1,10 @@
 import appConfig from '@common/config/app.config';
+import { DatabaseModule } from '@common/database/database.module';
 import { AuthModule } from '@modules/auth/auth.module';
-import { RefreshToken } from '@modules/auth/entities/refresh-token.entity';
-import { User } from '@modules/auth/entities/user.entity';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -27,16 +25,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         ],
       }),
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.getOrThrow<string>('app.databaseUrl'),
-        entities: [User, RefreshToken],
-        synchronize: !configService.getOrThrow<boolean>('app.isProduction'),
-      }),
-    }),
+    DatabaseModule,
     AuthModule,
   ],
   providers: [

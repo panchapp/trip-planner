@@ -99,7 +99,7 @@ Always use path aliases for cross-boundary imports. Relative imports are fine on
 
 - **SCSS** for all component and global styles
 - `styleUrl: './component.scss'` (singular)
-- Global styles in `src/styles.scss`
+- Global styles in `src/styles/styles.scss`
 - Prettier: `printWidth: 100`, `singleQuote: true`
 
 ## TypeScript

@@ -30,61 +30,33 @@ export class TripsModule {}
 ## Controllers
 
 ```typescript
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  Query,
-  HttpCode,
-  HttpStatus,
-  ParseIntPipe,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { TripsService } from './trips.service';
-import { CreateTripDto } from './dto/create-trip.dto';
-import { UpdateTripDto } from './dto/update-trip.dto';
-
-@ApiTags('trips')
 @Controller('trips')
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new trip' })
-  @ApiResponse({ status: 201, description: 'Trip created' })
   create(@Body() dto: CreateTripDto) {
     return this.tripsService.create(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all trips' })
   findAll(@Query('page', new ParseIntPipe({ optional: true })) page?: number) {
     return this.tripsService.findAll(page);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a trip by ID' })
-  @ApiParam({ name: 'id', description: 'Trip ID' })
-  @ApiResponse({ status: 200, description: 'Trip found' })
-  @ApiResponse({ status: 404, description: 'Trip not found' })
   findOne(@Param('id') id: string) {
     return this.tripsService.findOne(id);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a trip' })
   update(@Param('id') id: string, @Body() dto: UpdateTripDto) {
     return this.tripsService.update(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a trip' })
   remove(@Param('id') id: string) {
     return this.tripsService.remove(id);
   }
@@ -102,10 +74,6 @@ export class TripsController {
 ## Services
 
 ```typescript
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { TripRepositoryPort } from '../domain/ports/trip-repository.port';
-import { CreateTripDto } from './dto/create-trip.dto';
-
 @Injectable()
 export class TripsService {
   constructor(private readonly tripRepository: TripRepositoryPort) {}
@@ -136,8 +104,6 @@ export class TripsService {
 - Use `IntrinsicException` for errors that should bypass the global exception filter and automatic logging (e.g., expected validation rejections in hot paths):
 
 ```typescript
-import { IntrinsicException } from '@nestjs/common';
-
 throw new IntrinsicException('Rate limit exceeded');
 ```
 
@@ -146,31 +112,18 @@ throw new IntrinsicException('Rate limit exceeded');
 ## DTOs and Validation
 
 ```typescript
-import {
-  IsString,
-  IsNotEmpty,
-  IsDateString,
-  IsOptional,
-} from 'class-validator';
-import { PartialType } from '@nestjs/mapped-types';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 export class CreateTripDto {
-  @ApiProperty({ description: 'Trip title', example: 'Summer in Italy' })
   @IsString()
   @IsNotEmpty()
   readonly title: string;
 
-  @ApiPropertyOptional({ description: 'Trip description' })
   @IsString()
   @IsOptional()
   readonly description?: string;
 
-  @ApiProperty({ description: 'Start date (ISO 8601)', example: '2026-07-01' })
   @IsDateString()
   readonly startDate: string;
 
-  @ApiProperty({ description: 'End date (ISO 8601)', example: '2026-07-15' })
   @IsDateString()
   readonly endDate: string;
 }
@@ -187,7 +140,7 @@ export class UpdateTripDto extends PartialType(CreateTripDto) {}
 - `transform: true` auto-transforms payloads to DTO class instances.
 - Use `@nestjs/mapped-types`: `PartialType`, `PickType`, `OmitType`, `IntersectionType`.
 - Mark DTO properties as `readonly`.
-- Add `@ApiProperty()` / `@ApiPropertyOptional()` on every DTO property.
+- Do NOT add Swagger decorators (`@ApiProperty`, etc.) to DTOs — we use baseline Swagger only.
 
 ## Database & Repository Pattern
 
@@ -241,13 +194,11 @@ export class TripsModule {}
 
 ## Swagger / OpenAPI
 
-Decorate controllers and DTOs for auto-generated API documentation.
+Use baseline Swagger setup only — no custom decorators on controllers or DTOs. Swagger will infer schema from class-validator and route metadata.
 
 Setup in `main.ts`:
 
 ```typescript
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
 const config = new DocumentBuilder()
   .setTitle('Trip Planner API')
   .setVersion('1.0')
@@ -260,19 +211,14 @@ SwaggerModule.setup('api/docs', app, document);
 
 ### Rules
 
-- Add `@ApiTags()` on every controller.
-- Add `@ApiOperation()` and `@ApiResponse()` on every endpoint.
-- Add `@ApiProperty()` / `@ApiPropertyOptional()` on every DTO property.
-- Use `@ApiBearerAuth()` on protected endpoints.
+- Do NOT use `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiParam`, `@ApiProperty`, `@ApiPropertyOptional`, `@ApiBearerAuth`, or any other Swagger decorators.
+- Rely on the baseline DocumentBuilder + createDocument setup — Swagger infers schemas from DTO types and route metadata automatically.
 
 ## Security
 
 ### Rate Limiting
 
 ```typescript
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-
 @Module({
   imports: [
     ThrottlerModule.forRoot({
@@ -287,8 +233,6 @@ export class AppModule {}
 ### Helmet & CORS
 
 ```typescript
-import helmet from 'helmet';
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
@@ -309,14 +253,6 @@ async function bootstrap() {
 ## Error Handling
 
 ```typescript
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-} from '@nestjs/common';
-import { Response } from 'express';
-
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
@@ -342,9 +278,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
 ## Guards
 
 ```typescript
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -367,15 +300,6 @@ export class RolesGuard implements CanActivate {
 ## Interceptors
 
 ```typescript
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
-
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
@@ -396,8 +320,6 @@ export class LoggingInterceptor implements NestInterceptor {
 ## Configuration
 
 ```typescript
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -429,7 +351,7 @@ export class AppModule {}
 - [ ] Global `ValidationPipe` with `whitelist`, `forbidNonWhitelisted`, `transform`
 - [ ] Built-in HTTP exceptions for error responses
 - [ ] Repository pattern for data access — services depend on abstract ports
-- [ ] Swagger decorators on controllers (`@ApiTags`, `@ApiOperation`, `@ApiResponse`) and DTOs (`@ApiProperty`)
+- [ ] No Swagger decorators — baseline setup only (DocumentBuilder + createDocument)
 - [ ] `@nestjs/config` `ConfigService` — no raw `process.env`
 - [ ] Scoped `Logger` instances — no `console.log`
 - [ ] Guards for auth, interceptors for cross-cutting, pipes for validation

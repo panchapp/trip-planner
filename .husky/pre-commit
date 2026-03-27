@@ -1,1 +1,2 @@
-# Add lint-staged or tests here if needed
+pnpm --filter app-client run format:check
+pnpm --filter app-service run format:check

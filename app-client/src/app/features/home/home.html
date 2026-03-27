@@ -1,0 +1,17 @@
+<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100">
+  <div class="rounded bg-white p-8 text-center shadow-md">
+    <h1 class="mb-4 text-4xl font-bold text-gray-800">Welcome!</h1>
+    @if (authStore.user(); as user) {
+      <p class="mb-4 text-lg text-gray-600">
+        Signed in as <span class="font-semibold">{{ user.email }}</span>
+      </p>
+      <button
+        type="button"
+        (click)="logout()"
+        class="focus:shadow-outline rounded bg-red-600 px-4 py-2 font-bold text-white hover:bg-red-700 focus:outline-none"
+      >
+        Sign out
+      </button>
+    }
+  </div>
+</div>

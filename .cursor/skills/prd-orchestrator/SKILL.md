@@ -137,10 +137,10 @@ Use the `Task` tool to launch up to **2 subagents concurrently** — one per tra
 ```
 You are implementing the backend track of a PRD.
 
-## Context
+## Mandatory Skills (MUST follow)
 
-Read the following skills before writing any code:
-- `.cursor/skills/nestjs-service/SKILL.md`
+You MUST read and apply the following skill. Do not write any backend code without following its patterns:
+- `.cursor/skills/nestjs-service/SKILL.md` — apply ALL NestJS conventions from this skill
 - `app-service/CLAUDE.md`
 
 ## PRD
@@ -151,9 +151,9 @@ Read the following skills before writing any code:
 
 ## Instructions
 
-1. Read the skill files listed above FIRST.
+1. Read `.cursor/skills/nestjs-service/SKILL.md` and `app-service/CLAUDE.md` BEFORE writing any code. These are mandatory.
 2. Implement each backend task in order, respecting dependencies.
-3. Follow all NestJS 11 patterns from the skill (modules, controllers, services, DTOs, repository pattern, Swagger decorators, etc.).
+3. Follow ALL patterns from the nestjs-service skill — no exceptions.
 4. After implementation, run `pnpm --filter app-service build` to verify the build passes.
 5. Run `pnpm --filter app-service lint` and fix any lint errors you introduced.
 6. Return a summary of all files created or modified, and any issues encountered.
@@ -164,10 +164,10 @@ Read the following skills before writing any code:
 ```
 You are implementing the frontend track of a PRD.
 
-## Context
+## Mandatory Skills (MUST follow)
 
-Read the following skills before writing any code:
-- `.cursor/skills/angular-client/SKILL.md`
+You MUST read and apply the following skill. Do not write any frontend code without following its patterns:
+- `.cursor/skills/angular-client/SKILL.md` — apply ALL Angular conventions from this skill
 - `app-client/CLAUDE.md`
 
 ## PRD
@@ -178,9 +178,9 @@ Read the following skills before writing any code:
 
 ## Instructions
 
-1. Read the skill files listed above FIRST.
+1. Read `.cursor/skills/angular-client/SKILL.md` and `app-client/CLAUDE.md` BEFORE writing any code. These are mandatory.
 2. Implement each frontend task in order, respecting dependencies.
-3. Follow all Angular 21 patterns from the skill (standalone components, signals, inject(), built-in control flow, resource/rxResource, reactive forms, etc.).
+3. Follow ALL patterns from the angular-client skill — no exceptions.
 4. After implementation, run `pnpm --filter app-client build` to verify the build passes.
 5. Run `pnpm --filter app-client lint` and fix any lint errors you introduced.
 6. Return a summary of all files created or modified, and any issues encountered.

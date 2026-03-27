@@ -7,15 +7,30 @@ description: Angular 21 best practices and coding guidelines for the app-client 
 
 > **Conventions reference**: `app-client/CLAUDE.md` (always loaded) covers project structure, naming, path aliases, and key patterns. This skill provides detailed code generation patterns and decision guidance.
 
+## Styling — Tailwind v4 Only
+
+**Mandatory**: Use Tailwind CSS v4 for ALL styling. Do NOT add custom CSS of any kind.
+
+- No `styleUrl`, `styles`, or inline `style` blocks in components.
+- No `.scss`, `.css`, or `.less` files.
+- No `:host` rules, component-specific CSS, or custom style sheets.
+- Style exclusively with Tailwind utility classes in templates: `class="flex gap-4 p-6 rounded-lg bg-slate-100"`.
+- Use `@tailwind` directives only in the project's global Tailwind entry (e.g. `src/styles/tailwind.css`).
+- Familiarize yourself with Tailwind v4 syntax and utilities — use `@apply` sparingly and only where the project already uses it in the global config.
+
+### Rules
+
+- Every component must be styled via Tailwind utility classes in its template.
+- If you need a reusable pattern, use Tailwind's `@layer components` or `@apply` in the global Tailwind config — never in component-level style files.
+- Do not create or reference `*.scss`, `*.css` (except the global `src/styles/tailwind.css`), or component `styleUrl`s.
+
 ## Components
 
 ```typescript
-import { Component, signal, computed, input, output } from '@angular/core';
-
 @Component({
   selector: 'app-user-card',
   templateUrl: './user-card.html',
-  styleUrl: './user-card.scss',
+  imports: [],
 })
 export class UserCard {
   readonly name = input.required<string>();
@@ -51,11 +66,12 @@ export class UserCard {
 Use `model()` to create a writable signal that supports two-way binding:
 
 ```typescript
-import { Component, model } from '@angular/core';
-
 @Component({
   selector: 'app-toggle',
-  template: `<button (click)="checked.set(!checked())">
+  template: `<button
+    class="px-4 py-2 rounded"
+    (click)="checked.set(!checked())"
+  >
     {{ checked() ? 'ON' : 'OFF' }}
   </button>`,
 })
@@ -75,8 +91,6 @@ Parent binds with two-way syntax:
 Use `linkedSignal()` for derived state that can be independently overridden:
 
 ```typescript
-import { linkedSignal, signal } from '@angular/core';
-
 export class ItemList {
   readonly items = signal<Item[]>([]);
   readonly selectedItem = linkedSignal(() => this.items()[0]);
@@ -94,15 +108,6 @@ When `items` changes, `selectedItem` resets to the first item — but users can 
 Use signal-based queries instead of `@ViewChild` / `@ContentChild`:
 
 ```typescript
-import {
-  Component,
-  viewChild,
-  viewChildren,
-  contentChild,
-  contentChildren,
-  ElementRef,
-} from '@angular/core';
-
 export class TabGroup {
   readonly tabHeader = viewChild.required<ElementRef>('header');
   readonly allPanels = viewChildren(TabPanel);
@@ -119,8 +124,6 @@ Access with `()` like any signal: `this.tabHeader().nativeElement`.
 Use `effect()` for imperative reactions to signal changes (logging, analytics, localStorage sync). Avoid using it for state derivation — use `computed()` or `linkedSignal()` instead.
 
 ```typescript
-import { effect, signal } from '@angular/core';
-
 export class ThemeSwitcher {
   readonly theme = signal<'light' | 'dark'>('light');
 
@@ -146,9 +149,6 @@ export class ThemeSwitcher {
 Always use the `inject()` function. Never use constructor-based injection.
 
 ```typescript
-import { inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
 export class UserService {
   private readonly http = inject(HttpClient);
 }
@@ -164,17 +164,17 @@ Use the built-in control flow syntax — never `*ngIf`, `*ngFor`, or `*ngSwitch`
 @if (isLoading()) {
 <app-spinner />
 } @else if (error()) {
-<p class="error">{{ error() }}</p>
+<p class="text-red-600">{{ error() }}</p>
 } @else { @for (item of items(); track item.id) {
 <app-item-card [item]="item" />
 } @empty {
 <p>No items found.</p>
 } } @switch (status()) { @case ('active') {
-<span class="badge active">Active</span>
+<span class="rounded px-2 py-1 bg-green-100 text-green-800">Active</span>
 } @case ('inactive') {
-<span class="badge">Inactive</span>
+<span class="rounded px-2 py-1 bg-slate-100">Inactive</span>
 } @default {
-<span class="badge">Unknown</span>
+<span class="rounded px-2 py-1 bg-slate-200">Unknown</span>
 } }
 ```
 
@@ -193,8 +193,6 @@ Use the built-in control flow syntax — never `*ngIf`, `*ngFor`, or `*ngSwitch`
 ## Routing
 
 ```typescript
-import { Routes } from '@angular/router';
-
 export const routes: Routes = [
   {
     path: 'trips',
@@ -230,9 +228,6 @@ export const authGuard: CanActivateFn = (route, state) => {
 ### Signal-Based Services
 
 ```typescript
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private readonly http = inject(HttpClient);
@@ -247,8 +242,6 @@ export class TripService {
 Use `resource()` for async data fetching tied to signal inputs. Prefer this over manual `.subscribe()` calls:
 
 ```typescript
-import { resource } from '@angular/core';
-
 export class TripDetail {
   readonly tripId = input.required<string>();
 
@@ -265,10 +258,6 @@ export class TripDetail {
 Use `rxResource()` when working with observables (e.g., `HttpClient`):
 
 ```typescript
-import { inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { HttpClient } from '@angular/common/http';
-
 export class TripDetail {
   private readonly http = inject(HttpClient);
   readonly tripId = input.required<string>();
@@ -299,8 +288,6 @@ Access in templates: `tripResource.value()`, `tripResource.isLoading()`, `tripRe
 - Use `DestroyRef` + `takeUntilDestroyed()` for manual subscription cleanup.
 
 ```typescript
-import { toSignal } from '@angular/core/rxjs-interop';
-
 export class SearchResults {
   private readonly searchService = inject(SearchService);
 
@@ -315,9 +302,6 @@ export class SearchResults {
 ### Reactive Forms with Typed Form Groups
 
 ```typescript
-import { Component, inject } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-
 @Component({
   selector: 'app-trip-form',
   templateUrl: './trip-form.html',
@@ -343,16 +327,22 @@ export class TripForm {
 ### Form Template
 
 ```html
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <label>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+  <label class="flex flex-col gap-1">
     Title
-    <input formControlName="title" />
+    <input formControlName="title" class="border rounded px-2 py-1" />
     @if (form.controls.title.errors?.['required']) {
-    <span class="error">Title is required</span>
+    <span class="text-red-600 text-sm">Title is required</span>
     }
   </label>
 
-  <button type="submit" [disabled]="form.invalid">Save</button>
+  <button
+    type="submit"
+    [disabled]="form.invalid"
+    class="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+  >
+    Save
+  </button>
 </form>
 ```
 
@@ -369,9 +359,6 @@ export class TripForm {
 Use `provideHttpClient(withInterceptors([...]))` in `app.config.ts`.
 
 ```typescript
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { authInterceptor } from '@core/interceptors/auth.interceptor';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
@@ -383,8 +370,6 @@ export const appConfig: ApplicationConfig = {
 Functional interceptors:
 
 ```typescript
-import { HttpInterceptorFn } from '@angular/common/http';
-
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = inject(AuthService).token();
   if (token) {
@@ -413,7 +398,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 - [ ] Lazy-loaded routes with functional guards/resolvers
 - [ ] RxJS for async only; signals for synchronous/UI state
 - [ ] Reactive forms with `FormBuilder.nonNullable.group()`
-- [ ] SCSS styles, strict TypeScript, Vitest tests
+- [ ] Tailwind v4 only — no custom CSS, SCSS, or component style files
 - [ ] `protected` / `protected readonly` for template-bound members
 - [ ] No `any` types
 - [ ] Path aliases (`@core/`, `@shared/`, etc.) for all non-sibling imports — no `../` traversal

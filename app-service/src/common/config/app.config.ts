@@ -12,6 +12,7 @@ const appConfigSchema = z.object({
   jwtRefreshSecret: z.string().min(1),
   jwtRefreshExpiresInSeconds: z.number().int().positive(),
   authCookieSecure: z.boolean(),
+  authCookieSameSite: z.enum(['lax', 'none', 'strict']),
   authCookieMaxAgeMs: z.number().int().positive(),
   refreshCookieMaxAgeMs: z.number().int().positive(),
   databaseUrl: z.url(),
@@ -22,6 +23,14 @@ const appConfigSchema = z.object({
 });
 
 type AppConfig = z.infer<typeof appConfigSchema>;
+
+function parseCookieSameSite(raw: string | undefined): 'lax' | 'none' | 'strict' {
+  const v = raw?.toLowerCase();
+  if (v === 'none' || v === 'strict' || v === 'lax') {
+    return v;
+  }
+  return 'lax';
+}
 
 function configFromEnv(): unknown {
   return {
@@ -35,6 +44,7 @@ function configFromEnv(): unknown {
     jwtRefreshSecret: process.env['JWT_REFRESH_SECRET'],
     jwtRefreshExpiresInSeconds: parseInt(process.env['JWT_REFRESH_EXPIRES_IN_SECONDS'] ?? '', 10),
     authCookieSecure: process.env['AUTH_COOKIE_SECURE'] === 'true',
+    authCookieSameSite: parseCookieSameSite(process.env['AUTH_COOKIE_SAME_SITE']),
     authCookieMaxAgeMs: parseInt(process.env['AUTH_COOKIE_MAX_AGE_MS'] ?? '', 10),
     refreshCookieMaxAgeMs: parseInt(process.env['REFRESH_COOKIE_MAX_AGE_MS'] ?? '', 10),
     databaseUrl: process.env['DATABASE_URL'],
@@ -55,5 +65,12 @@ export default registerAs('app', (): AppConfig => {
     throw new Error(`Invalid configuration:\n${detail}`);
   }
 
-  return result.data;
+  const data = result.data;
+  if (data.authCookieSameSite === 'none' && !data.authCookieSecure) {
+    throw new Error(
+      'Invalid configuration: authCookieSameSite "none" requires AUTH_COOKIE_SECURE=true (browsers require Secure for SameSite=None cookies).',
+    );
+  }
+
+  return data;
 });

@@ -38,13 +38,13 @@ export class UserCard {
 
   readonly selected = output<string>();
 
-  protected readonly isExpanded = signal(false);
+  readonly isExpanded = signal(false);
 
-  protected readonly displayName = computed(
+  readonly displayName = computed(
     () => `${this.name()} (${this.age()})`,
   );
 
-  protected toggle(): void {
+  toggle(): void {
     this.isExpanded.update((v) => !v);
   }
 }
@@ -55,7 +55,7 @@ export class UserCard {
 - Use `signal()` for mutable local state, `computed()` for derived state.
 - Use `input()` / `input.required()` for inputs — never `@Input()`.
 - Use `output()` for outputs — never `@Output()` with `EventEmitter`.
-- Mark template-accessed members `protected readonly` (signals) or `protected` (methods).
+- Do not use `protected` on component class members. Use `readonly` for template-bound fields; omit visibility for public methods and fields (TypeScript default is `public`). Use `private` only for members not referenced from the template.
 - Keep components small and focused — extract logic into services.
 - Use `OnPush` change detection strategy when mixing with libraries that don't use signals; otherwise zoneless handles it.
 
@@ -310,14 +310,14 @@ export class SearchResults {
 export class TripForm {
   private readonly fb = inject(FormBuilder);
 
-  protected readonly form = this.fb.nonNullable.group({
+  readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
     description: [''],
     startDate: ['', Validators.required],
     endDate: ['', Validators.required],
   });
 
-  protected onSubmit(): void {
+  onSubmit(): void {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
   }
@@ -399,6 +399,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 - [ ] RxJS for async only; signals for synchronous/UI state
 - [ ] Reactive forms with `FormBuilder.nonNullable.group()`
 - [ ] Tailwind v4 only — no custom CSS, SCSS, or component style files
-- [ ] `protected` / `protected readonly` for template-bound members
+- [ ] No `protected` on component members — `readonly` + default `public`, or `private` when not used from the template
 - [ ] No `any` types
 - [ ] Path aliases (`@core/`, `@shared/`, etc.) for all non-sibling imports — no `../` traversal

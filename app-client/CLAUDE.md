@@ -52,7 +52,7 @@ Angular 21 drops the `.component` suffix in file and class names.
 - `signal()` for mutable local state, `computed()` for derived state
 - `input()` / `input.required()` for inputs — never `@Input()`
 - `output()` for outputs — never `@Output()` with `EventEmitter`
-- Mark template-accessed members `protected readonly` (signals) or `protected` (methods)
+- Do not use `protected` on component class members. Use `readonly` for template-bound fields; omit visibility for public members (TypeScript default). Use `private` only for members not used from the template.
 
 ### Dependency Injection
 

@@ -114,13 +114,19 @@ Produce a structured markdown plan with the following template:
 3. If the user requests changes, revise the plan and ask again.
 4. Repeat until the user explicitly approves.
 
-### 2.5 Save the Plan
+### 2.5 Save the Plan (required before execution)
 
-Once approved, write the plan as `PLAN.md` inside the PRD folder:
+Once approved, **write the plan to the repository** as `PLAN.md` inside the PRD folder:
 
 ```
 PRDs/<prd-folder>/PLAN.md
 ```
+
+**Rules:**
+
+- This file is the **single source of truth** for implementation and for subagent prompts. Subagents must be given sections pasted from this file or the path `PRDs/<prd-folder>/PLAN.md`.
+- **Do not** treat Cursor plan artifacts (e.g. files under `.cursor/plans/`) as a substitute for `PRDs/<prd-folder>/PLAN.md`. If planning used a Cursor plan UI, still **materialize** the same content into `PRDs/<prd-folder>/PLAN.md` before Phase 3.
+- **Do not** launch parallel implementation tasks until `PLAN.md` exists at the path above and matches what the user approved.
 
 ---
 
@@ -128,9 +134,19 @@ PRDs/<prd-folder>/PLAN.md
 
 After the user confirms the plan, switch back to **Agent mode** (the user will do this when approving from plan mode) and launch implementation.
 
+### 3.0 Gate — verify `PLAN.md` on disk
+
+Before any implementation or parallel work:
+
+1. Confirm `PRDs/<prd-folder>/PLAN.md` exists in the workspace.
+2. If it is missing, **create it now** with the approved plan content (same template as §2.3), then proceed.
+3. Only after step 1–2 are satisfied, continue to §3.1.
+
 ### 3.1 Launch Parallel Tasks
 
 Use the `Task` tool to launch up to **2 subagents concurrently** — one per track that applies. Both calls go in the **same message** so they run in parallel.
+
+**Prerequisite:** §3.0 complete (`PLAN.md` present under `PRDs/<prd-folder>/`).
 
 #### Backend Task Prompt Template
 
@@ -217,9 +233,10 @@ After both tasks complete:
 - [ ] PRD file read in full
 - [ ] Switched to Plan mode before analyzing
 - [ ] Plan covers both backend and frontend tracks (when applicable)
-- [ ] Plan saved as `PLAN.md` in the PRD folder
+- [ ] Plan saved as **`PRDs/<prd-folder>/PLAN.md`** in the repo (not only a Cursor/UI plan)
+- [ ] Gate §3.0 satisfied before any code or parallel `Task` runs
 - [ ] User explicitly approved the plan before execution
-- [ ] Parallel tasks launched with correct skill references
+- [ ] Parallel tasks launched with correct skill references (same message, up to 2 tracks)
 - [ ] Each task reads its corresponding skill file first
 - [ ] Build and lint verified per package
 - [ ] Consolidated report presented to user

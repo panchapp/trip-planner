@@ -1,17 +1,157 @@
-<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-  <div class="rounded bg-white p-8 text-center shadow-md">
-    <h1 class="mb-4 text-4xl font-bold text-gray-800">Welcome!</h1>
-    @if (authStore.user(); as user) {
-      <p class="mb-4 text-lg text-gray-600">
-        Signed in as <span class="font-semibold">{{ user.email }}</span>
-      </p>
-      <button
-        type="button"
-        (click)="logout()"
-        class="focus:shadow-outline rounded bg-red-600 px-4 py-2 font-bold text-white hover:bg-red-700 focus:outline-none"
-      >
-        Sign out
-      </button>
-    }
+<div
+  class="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-[#0c1525] to-[#0a1628]"
+>
+  <!-- Ambient glows -->
+  <div class="pointer-events-none absolute inset-0 z-0">
+    <div
+      class="absolute -top-[15%] -left-[15%] h-[65%] w-[65%] rounded-full bg-blue-600/10 blur-[110px]"
+    ></div>
+    <div
+      class="absolute -right-[12%] bottom-[-5%] h-[55%] w-[55%] rounded-full bg-cyan-500/8 blur-[100px]"
+    ></div>
   </div>
+
+  <header
+    class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/40 px-4 py-4 backdrop-blur-xl md:px-8"
+  >
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <a routerLink="/home" class="cursor-pointer text-xl font-black tracking-tight text-white">
+        Trip
+        <span
+          class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent"
+          >Planner</span
+        >
+      </a>
+      <div class="flex items-center gap-4">
+        @if (authStore.user(); as user) {
+          <span class="hidden truncate text-sm text-slate-300 sm:inline">{{ user.email }}</span>
+        }
+        <button
+          type="button"
+          (click)="logout()"
+          class="cursor-pointer rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.12] focus:ring-2 focus:ring-orange-500/40 focus:outline-none"
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 mx-auto max-w-6xl space-y-20 px-4 py-12 md:px-8 lg:py-16">
+    @if (error(); as err) {
+      <div
+        class="flex flex-col gap-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-6 py-5 text-red-200 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between"
+        role="alert"
+      >
+        <p class="text-sm font-medium">{{ err }}</p>
+        <button
+          type="button"
+          (click)="onRetryLoad()"
+          class="shrink-0 cursor-pointer rounded-xl bg-red-600/80 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-red-600"
+        >
+          Retry
+        </button>
+      </div>
+    }
+
+    @if (loading() && isEmpty()) {
+      <div class="flex flex-col items-center justify-center gap-6 py-40 text-slate-400">
+        <div
+          class="h-14 w-14 animate-spin rounded-full border-2 border-orange-500/40 border-t-orange-400"
+          aria-hidden="true"
+        ></div>
+        <p class="text-sm font-medium tracking-widest uppercase">Fetching your adventures…</p>
+      </div>
+    } @else {
+      <div class="mb-16">
+        <app-hero-greeting [activeTrip]="activeTrip()" [nextUpcoming]="upcomingTrips()[0]" />
+      </div>
+
+      @if (isEmpty()) {
+        <app-empty-state (startPlanning)="onStartPlanning()" />
+      } @else {
+        @if (activeTrip(); as active) {
+          <section class="space-y-6">
+            <h2 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">
+              Current trip
+            </h2>
+            <app-trip-card [trip]="active" (selectTrip)="onTripSelected($event)" />
+          </section>
+        }
+
+        @if (upcomingTrips().length > 0) {
+          <section class="space-y-6">
+            <h2 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">
+              Upcoming
+            </h2>
+            <div class="flex gap-8 overflow-x-auto pb-8">
+              @for (trip of upcomingTrips(); track trip.id) {
+                <div class="shrink-0">
+                  <app-trip-card [trip]="trip" (selectTrip)="onTripSelected($event)" />
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        @if (draftTrips().length > 0) {
+          <section class="space-y-6">
+            <h2 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">Drafts</h2>
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              @for (trip of draftTrips(); track trip.id) {
+                <app-trip-card [trip]="trip" (selectTrip)="onTripSelected($event)" />
+              }
+            </div>
+          </section>
+        }
+
+        <section class="space-y-8">
+          <div
+            class="flex flex-wrap items-center justify-between gap-4 border-t border-white/5 pt-16"
+          >
+            <h2 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">
+              Past trips
+            </h2>
+            <button
+              type="button"
+              (click)="togglePast()"
+              class="cursor-pointer text-xs font-black tracking-widest text-orange-400 uppercase transition hover:text-orange-300 focus:outline-none"
+            >
+              {{ showPast() ? 'Hide history' : 'View history' }}
+            </button>
+          </div>
+          @if (showPast()) {
+            <div class="flex flex-col gap-10">
+              <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                @for (trip of pastTrips(); track trip.id) {
+                  <app-trip-card [trip]="trip" (selectTrip)="onTripSelected($event)" />
+                }
+              </div>
+              @if (pastHasMore()) {
+                <button
+                  type="button"
+                  (click)="onLoadMorePast()"
+                  [disabled]="pastLoadingMore()"
+                  class="cursor-pointer self-start rounded-xl border border-white/10 bg-white/[0.06] px-8 py-3 text-xs font-black tracking-widest text-white uppercase transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  @if (pastLoadingMore()) {
+                    <span class="flex items-center gap-3">
+                      <span
+                        class="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white"
+                      ></span>
+                      Loading…
+                    </span>
+                  } @else {
+                    Load more
+                  }
+                </button>
+              }
+            </div>
+          }
+        </section>
+      }
+    }
+
+    <app-quick-action-fab (planNewTrip)="onPlanNewTrip()" />
+  </main>
 </div>

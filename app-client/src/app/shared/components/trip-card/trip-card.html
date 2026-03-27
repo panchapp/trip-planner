@@ -1,0 +1,75 @@
+<button
+  type="button"
+  (click)="onSelect()"
+  class="group relative flex w-full max-w-sm cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/4 text-left shadow-2xl ring-1 ring-white/10 transition-all duration-300 hover:scale-[1.02] hover:bg-white/8 hover:ring-white/20 focus:ring-2 focus:ring-orange-500/40 focus:outline-none"
+>
+  <div
+    class="relative h-48 w-full overflow-hidden bg-slate-900"
+    [class.bg-slate-800]="!trip().coverImageUrl"
+  >
+    @if (trip().coverImageUrl; as url) {
+      <img
+        [src]="url"
+        [alt]="trip().destination"
+        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+      />
+    } @else {
+      <div
+        class="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-900 to-slate-800 text-6xl opacity-20"
+      >
+        ✈
+      </div>
+    }
+
+    <div
+      class="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-950/20 to-transparent"
+    ></div>
+
+    @if (badgeLabel(); as label) {
+      <span
+        class="absolute top-5 left-5 rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black tracking-[0.2em] text-white uppercase shadow-lg"
+      >
+        {{ label }}
+      </span>
+    }
+  </div>
+
+  <div class="flex flex-1 flex-col gap-3 p-6">
+    <div class="space-y-1">
+      <h3 class="line-clamp-1 text-xl font-bold tracking-tight text-white">
+        {{ trip().destination }}
+      </h3>
+      <p class="line-clamp-1 text-sm font-medium text-slate-400">
+        {{ trip().title }}
+      </p>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-2.5 border-t border-white/5 pt-5">
+      <div class="flex items-center gap-2.5 text-xs font-bold text-slate-400">
+        <svg
+          class="h-4 w-4 text-orange-400/80"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2.5"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+        <span class="tracking-wide">{{ formatDateRange(trip()) }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase">
+          @if (collaboratorCount() > 0) {
+            {{ collaboratorCount() + 1 }} Travelers
+          } @else {
+            Solo
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+</button>

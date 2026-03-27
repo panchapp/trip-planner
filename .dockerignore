@@ -1,0 +1,6 @@
+# Preserve pnpm-installed node_modules in the image — COPY app-service must not
+# replace the workspace install output from the prior RUN pnpm install.
+**/node_modules
+**/dist
+.git
+.gitignore

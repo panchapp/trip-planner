@@ -21,18 +21,20 @@ import type { Request, Response } from 'express';
 const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
 
-const getCookieOptions = (secure: boolean, maxAge: number) => ({
+type SameSite = 'lax' | 'none' | 'strict';
+
+const getCookieOptions = (secure: boolean, maxAge: number, sameSite: SameSite) => ({
   httpOnly: true,
-  secure,
-  sameSite: 'lax' as const,
+  secure: sameSite === 'none' ? true : secure,
+  sameSite,
   maxAge,
   path: '/' as const,
 });
 
-const getClearCookieOptions = (secure: boolean) => ({
+const getClearCookieOptions = (secure: boolean, sameSite: SameSite) => ({
   httpOnly: true,
-  secure,
-  sameSite: 'lax' as const,
+  secure: sameSite === 'none' ? true : secure,
+  sameSite,
   path: '/' as const,
 });
 
@@ -54,13 +56,22 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.authService.issueTokenPair(user);
     const frontendUrl = this.configService.getOrThrow<string>('app.frontendUrl');
     const cookieSecure = this.configService.getOrThrow<boolean>('app.authCookieSecure');
+    const sameSite = this.configService.getOrThrow<SameSite>('app.authCookieSameSite');
     const accessCookieMaxAgeMs = this.configService.getOrThrow<number>('app.authCookieMaxAgeMs');
     const refreshCookieMaxAgeMs = this.configService.getOrThrow<number>(
       'app.refreshCookieMaxAgeMs',
     );
 
-    res.cookie(ACCESS_COOKIE, accessToken, getCookieOptions(cookieSecure, accessCookieMaxAgeMs));
-    res.cookie(REFRESH_COOKIE, refreshToken, getCookieOptions(cookieSecure, refreshCookieMaxAgeMs));
+    res.cookie(
+      ACCESS_COOKIE,
+      accessToken,
+      getCookieOptions(cookieSecure, accessCookieMaxAgeMs, sameSite),
+    );
+    res.cookie(
+      REFRESH_COOKIE,
+      refreshToken,
+      getCookieOptions(cookieSecure, refreshCookieMaxAgeMs, sameSite),
+    );
     res.redirect(frontendUrl);
   }
 
@@ -75,13 +86,22 @@ export class AuthController {
 
     const { accessToken, refreshToken } = await this.authService.refreshFromRawToken(raw);
     const cookieSecure = this.configService.getOrThrow<boolean>('app.authCookieSecure');
+    const sameSite = this.configService.getOrThrow<SameSite>('app.authCookieSameSite');
     const accessCookieMaxAgeMs = this.configService.getOrThrow<number>('app.authCookieMaxAgeMs');
     const refreshCookieMaxAgeMs = this.configService.getOrThrow<number>(
       'app.refreshCookieMaxAgeMs',
     );
 
-    res.cookie(ACCESS_COOKIE, accessToken, getCookieOptions(cookieSecure, accessCookieMaxAgeMs));
-    res.cookie(REFRESH_COOKIE, refreshToken, getCookieOptions(cookieSecure, refreshCookieMaxAgeMs));
+    res.cookie(
+      ACCESS_COOKIE,
+      accessToken,
+      getCookieOptions(cookieSecure, accessCookieMaxAgeMs, sameSite),
+    );
+    res.cookie(
+      REFRESH_COOKIE,
+      refreshToken,
+      getCookieOptions(cookieSecure, refreshCookieMaxAgeMs, sameSite),
+    );
     res.status(HttpStatus.NO_CONTENT).send();
   }
 
@@ -95,7 +115,8 @@ export class AuthController {
     }
 
     const cookieSecure = this.configService.getOrThrow<boolean>('app.authCookieSecure');
-    const clearOpts = getClearCookieOptions(cookieSecure);
+    const sameSite = this.configService.getOrThrow<SameSite>('app.authCookieSameSite');
+    const clearOpts = getClearCookieOptions(cookieSecure, sameSite);
     res.clearCookie(ACCESS_COOKIE, clearOpts);
     res.clearCookie(REFRESH_COOKIE, clearOpts);
     res.status(HttpStatus.NO_CONTENT).send();

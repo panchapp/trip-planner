@@ -1,6 +1,6 @@
-FROM node:current-alpine AS development
+FROM node:22-alpine AS development
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 WORKDIR /workspace
 
@@ -21,9 +21,9 @@ WORKDIR /workspace/app-service
 EXPOSE 3000
 
 # Build image: compiles Nest app and migration artifacts into /dist.
-FROM node:current-alpine AS build
+FROM node:22-alpine AS build
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 WORKDIR /workspace
 ENV HUSKY=0
@@ -40,9 +40,9 @@ WORKDIR /workspace/app-service
 RUN pnpm build:all
 
 # Runtime image: smallest stage with prod deps + compiled output only.
-FROM node:current-alpine AS production
+FROM node:22-alpine AS production
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 WORKDIR /workspace
 

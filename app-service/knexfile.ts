@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import type { Knex } from 'knex';
+import path from 'path';
 
-// Load environment variables
 dotenv.config({ path: '.env' });
 
 const config: Knex.Config = {
@@ -9,7 +9,7 @@ const config: Knex.Config = {
   connection: process.env['DATABASE_URL'] ?? '',
   pool: { min: 0, max: 10 },
   migrations: {
-    directory: './migrations',
+    directory: path.join(__dirname, 'migrations'),
   },
 };
 

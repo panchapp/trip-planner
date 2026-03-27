@@ -1,6 +1,7 @@
 import appConfig from '@common/config/app.config';
 import { DatabaseModule } from '@common/database/database.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { TripsModule } from '@modules/trips/trips.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -27,6 +28,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     }),
     DatabaseModule,
     AuthModule,
+    TripsModule,
   ],
   providers: [
     {

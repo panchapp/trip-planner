@@ -8,10 +8,10 @@ import { AuthStore } from '@app/core/stores/auth.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
-  protected readonly authStore = inject(AuthStore);
+  readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
 
-  protected signInWithGoogle(): void {
+  signInWithGoogle(): void {
     this.authService.login();
   }
 }

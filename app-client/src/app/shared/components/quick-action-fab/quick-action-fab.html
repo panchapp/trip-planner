@@ -1,0 +1,18 @@
+<div class="group pointer-events-none fixed right-8 bottom-8 z-50 flex flex-col items-end gap-3">
+  <button
+    type="button"
+    (click)="onClick()"
+    class="pointer-events-auto relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-linear-to-r from-amber-400 via-orange-400 to-amber-500 text-3xl text-white shadow-[0_8px_30px_rgb(249,115,22,0.3)] transition-all duration-300 hover:scale-110 hover:shadow-[0_12px_40px_rgb(249,115,22,0.4)] focus:ring-4 focus:ring-orange-500/20 focus:outline-none active:scale-95"
+    aria-label="Plan new trip with AI"
+  >
+    <div
+      class="absolute inset-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"
+    ></div>
+    <span class="relative transition-transform group-hover:rotate-90">+</span>
+  </button>
+  <span
+    class="pointer-events-none rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-2xl backdrop-blur-xl transition-all group-hover:translate-x-[-10px]"
+  >
+    New Adventure
+  </span>
+</div>

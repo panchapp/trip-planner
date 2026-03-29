@@ -9,13 +9,13 @@ export const routes: Routes = [
     loadComponent: () => import('@features/auth/login/login').then((m) => m.Login),
   },
   {
-    path: 'home',
+    path: 'trips',
     canActivate: [authGuard],
-    loadComponent: () => import('@features/home/home').then((m) => m.Home),
+    loadChildren: () => import('@features/trip-workspace/trips.routes').then((m) => m.routes),
   },
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'home',
+    redirectTo: 'trips',
   },
 ];

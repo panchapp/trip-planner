@@ -171,7 +171,7 @@ export class Home {
   }
 
   onTripSelected(trip: Trip): void {
-    void this.router.navigate(['/home'], { queryParams: { trip: trip.id } });
+    void this.router.navigate(['/trips', trip.id]);
   }
 
   onPlanNewTrip(): void {

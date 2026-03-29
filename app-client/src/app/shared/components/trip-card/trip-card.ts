@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { LucideCalendar } from '@lucide/angular';
 import type { Trip } from '@shared/models/trip.model';
 import { tripUiCategory } from '@shared/models/trip.model';
 
@@ -6,6 +7,7 @@ import { tripUiCategory } from '@shared/models/trip.model';
   selector: 'app-trip-card',
   templateUrl: './trip-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [LucideCalendar],
 })
 export class TripCard {
   readonly trip = input.required<Trip>();

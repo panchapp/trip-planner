@@ -19,7 +19,7 @@ pnpm --filter app-client lint    # lint
 
 ```
 src/app/
-├── app.ts / app.html / app.scss   # Root component
+├── app.ts / app.html              # Root component
 ├── app.config.ts                  # ApplicationConfig with providers
 ├── app.routes.ts                  # Top-level route definitions
 ├── core/                          # Singleton services, interceptors, guards
@@ -97,10 +97,8 @@ Always use path aliases for cross-boundary imports. Relative imports are fine on
 
 ## Styles
 
-- **SCSS** for all component and global styles
-- `styleUrl: './component.scss'` (singular)
-- Global styles in `src/styles/styles.scss`
-- Prettier: `printWidth: 100`, `singleQuote: true`
+- **Tailwind CSS v4** — utility classes in templates; see the `angular-client` skill for the full rules
+- Global entry: `src/styles/styles.css` (Tailwind `@import` / `@theme` as configured)
 
 ## TypeScript
 

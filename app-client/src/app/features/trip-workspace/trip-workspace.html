@@ -1,0 +1,58 @@
+<div
+  class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-[#0c1525] to-[#0a1628] text-slate-100"
+>
+  <div class="pointer-events-none absolute inset-0 z-0">
+    <div
+      class="absolute -top-[15%] -left-[15%] h-[65%] w-[65%] rounded-full bg-blue-600/10 blur-[110px]"
+    ></div>
+    <div
+      class="absolute -right-[12%] bottom-[-5%] h-[55%] w-[55%] rounded-full bg-cyan-500/8 blur-[100px]"
+    ></div>
+  </div>
+
+  @if (store.loading()) {
+    <div
+      class="relative z-10 flex flex-1 flex-col items-center justify-center gap-6 py-40 text-slate-400"
+    >
+      <div
+        class="h-14 w-14 animate-spin rounded-full border-2 border-orange-500/40 border-t-orange-400"
+        aria-hidden="true"
+      ></div>
+      <p class="text-sm font-medium tracking-widest uppercase">Loading trip…</p>
+    </div>
+  } @else if (store.error() && !store.trip()) {
+    <div class="relative z-10 flex flex-1 flex-col items-center justify-center gap-6 px-4 py-24">
+      <p class="max-w-md text-center text-sm font-medium text-red-200">{{ store.error() }}</p>
+      <a
+        routerLink="/trips"
+        class="cursor-pointer rounded-xl bg-white/[0.08] px-6 py-3 text-sm font-bold text-white transition hover:bg-white/[0.12]"
+      >
+        Back to dashboard
+      </a>
+    </div>
+  } @else if (store.trip()) {
+    <div class="relative z-10 flex min-h-0 flex-1 flex-col">
+      <app-trip-workspace-header />
+      <div
+        class="grid min-h-0 flex-1 grid-cols-[25%_45%_30%] gap-px border-y border-white/5 bg-white/5"
+      >
+        <aside
+          class="flex min-h-[min(40vh,320px)] items-center justify-center bg-slate-950/50 p-6 text-center"
+        >
+          <p class="text-sm font-medium text-slate-500">Sidebar — coming soon</p>
+        </aside>
+        <main
+          class="flex min-h-[min(40vh,320px)] items-center justify-center bg-slate-950/35 p-6 text-center"
+        >
+          <p class="text-sm font-medium text-slate-500">Canvas — coming soon</p>
+        </main>
+        <aside
+          class="flex min-h-[min(40vh,320px)] items-center justify-center bg-slate-950/50 p-6 text-center"
+        >
+          <p class="text-sm font-medium text-slate-500">Details — coming soon</p>
+        </aside>
+      </div>
+      <app-trip-workspace-footer (saveRequested)="save()" />
+    </div>
+  }
+</div>

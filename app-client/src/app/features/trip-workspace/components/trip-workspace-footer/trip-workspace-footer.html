@@ -1,0 +1,48 @@
+<footer
+  class="sticky bottom-0 z-40 border-t border-white/10 bg-slate-950/90 px-4 py-4 backdrop-blur-xl md:px-8"
+>
+  <div
+    class="mx-auto flex max-w-[1600px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div class="flex flex-wrap items-center gap-3">
+      <span
+        class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase"
+        [class.bg-emerald-500/15]="!store.isDirty()"
+        [class.text-emerald-300]="!store.isDirty()"
+        [class.bg-amber-500/15]="store.isDirty()"
+        [class.text-amber-200]="store.isDirty()"
+      >
+        @if (store.isDirty()) {
+          Unsaved changes
+        } @else {
+          Saved
+        }
+      </span>
+      @if (store.error(); as err) {
+        <span class="text-sm font-medium text-red-300">{{ err }}</span>
+      }
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        disabled
+        class="cursor-not-allowed rounded-xl border border-white/5 bg-white/[0.02] px-4 py-2.5 text-sm font-semibold text-slate-500"
+        title="Coming soon"
+      >
+        Delete
+      </button>
+      <button
+        type="button"
+        (click)="onSave()"
+        [disabled]="!store.isDirty() || store.saving()"
+        class="cursor-pointer rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-orange-500/20 transition hover:brightness-110 focus:ring-2 focus:ring-orange-400/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        @if (store.saving()) {
+          Saving…
+        } @else {
+          Save
+        }
+      </button>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,78 @@
+<header
+  class="shrink-0 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur-xl md:px-8"
+>
+  <div
+    class="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+  >
+    <div class="flex flex-col gap-3">
+      <a
+        routerLink="/trips"
+        class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"
+      >
+        <span aria-hidden="true" class="text-lg leading-none">←</span>
+        Back to dashboard
+      </a>
+      <label class="sr-only" for="trip-title">Trip name</label>
+      <div class="flex max-w-xl min-w-0 items-center gap-2">
+        @if (titleEditing()) {
+          <input
+            #titleInput
+            id="trip-title"
+            type="text"
+            class="min-w-0 flex-1 border-0 border-b border-orange-500/50 bg-transparent px-0 py-0.5 text-2xl font-black tracking-tight text-white placeholder:text-slate-500 focus:border-orange-400 focus:ring-0 focus:outline-none"
+            placeholder="Trip name"
+            [value]="store.trip()?.title ?? ''"
+            (input)="onTitleInput($event)"
+            (blur)="finishTitleEdit()"
+            (keydown)="onTitleKeydown($event)"
+          />
+        } @else {
+          <p
+            id="trip-title"
+            class="min-w-0 flex-1 truncate text-2xl font-black tracking-tight"
+            [class.text-slate-500]="!store.trip()?.title"
+            [class.text-white]="!!store.trip()?.title"
+          >
+            {{ store.trip()?.title || 'Trip name' }}
+          </p>
+          <button
+            type="button"
+            class="shrink-0 cursor-pointer rounded-lg p-2 text-orange-400 transition hover:bg-orange-500/15 hover:text-orange-300"
+            (click)="startTitleEdit()"
+            aria-label="Edit trip name"
+          >
+            <svg lucidePencil class="h-5 w-5" [size]="20" aria-hidden="true" />
+          </button>
+        }
+      </div>
+    </div>
+    <div class="flex flex-wrap items-end gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase"
+          for="trip-start"
+          >Start</label
+        >
+        <app-date-picker-field
+          inputId="trip-start"
+          [value]="dateInputStart()"
+          [maxDate]="dateMaxForStart()"
+          (valueChange)="onStartDateChange($event)"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase"
+          for="trip-end"
+          >End</label
+        >
+        <app-date-picker-field
+          inputId="trip-end"
+          [value]="dateInputEnd()"
+          [minDate]="dateMinForEnd()"
+          (valueChange)="onEndDateChange($event)"
+        />
+      </div>
+    </div>
+  </div>
+</header>
